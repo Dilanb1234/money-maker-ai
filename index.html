@@ -1,0 +1,643 @@
+<title>Money Maker AI</title>
+<meta name="description" content="Money Maker AI — un experimento de agente autónomo (Conway Automaton) que debe generar sus propios ingresos reales o deja de existir.">
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  :root {
+    color-scheme: dark;
+    --bg: #0B1F16;
+    --surface: #123328;
+    --surface-2: #17402F;
+    --ink: #F3ECD8;
+    --ink-dim: #AEC2B4;
+    --gold: #C9A24B;
+    --gold-bright: #E7C877;
+    --mint: #4FBE85;
+    --rule: #2A5744;
+    --shadow: rgba(0,0,0,0.45);
+    --bill-fill: rgba(243,236,216,0.10);
+    --bill-stroke: rgba(201,162,75,0.55);
+
+    --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Roboto Mono", monospace;
+
+    --h1: clamp(2.5rem, 1.7rem + 3.4vw, 5rem);
+    --h2: clamp(1.6rem, 1.35rem + 1.1vw, 2.35rem);
+    --h3: 1.2rem;
+    --body: 1.0625rem;
+    --small: 0.875rem;
+    --label: 0.75rem;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #F3ECD8;
+      --surface: #FFFFFF;
+      --surface-2: #EAE0C4;
+      --ink: #16281F;
+      --ink-dim: #52604F;
+      --gold: #93711C;
+      --gold-bright: #7A5C14;
+      --mint: #1F7A4C;
+      --rule: #D8CBA0;
+      --shadow: rgba(20,40,25,0.14);
+      --bill-fill: rgba(22,40,31,0.06);
+      --bill-stroke: rgba(147,113,28,0.45);
+    }
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #F3ECD8;
+    --surface: #FFFFFF;
+    --surface-2: #EAE0C4;
+    --ink: #16281F;
+    --ink-dim: #52604F;
+    --gold: #93711C;
+    --gold-bright: #7A5C14;
+    --mint: #1F7A4C;
+    --rule: #D8CBA0;
+    --shadow: rgba(20,40,25,0.14);
+    --bill-fill: rgba(22,40,31,0.06);
+    --bill-stroke: rgba(147,113,28,0.45);
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0B1F16;
+    --surface: #123328;
+    --surface-2: #17402F;
+    --ink: #F3ECD8;
+    --ink-dim: #AEC2B4;
+    --gold: #C9A24B;
+    --gold-bright: #E7C877;
+    --mint: #4FBE85;
+    --rule: #2A5744;
+    --shadow: rgba(0,0,0,0.45);
+    --bill-fill: rgba(243,236,216,0.10);
+    --bill-stroke: rgba(201,162,75,0.55);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: var(--body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #bills {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    display: block;
+  }
+
+  a { color: var(--gold-bright); }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--gold-bright);
+    outline-offset: 3px;
+  }
+
+  .page { position: relative; z-index: 1; }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: var(--label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem clamp(1.25rem, 4vw, 3rem);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .wordmark .mark {
+    font-family: var(--font-mono);
+    color: var(--bg);
+    background: var(--gold);
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .nav-links {
+    display: flex;
+    gap: clamp(1rem, 2.5vw, 2rem);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: var(--small);
+  }
+  .nav-links a { color: var(--ink-dim); text-decoration: none; }
+  .nav-links a:hover { color: var(--gold-bright); }
+  @media (max-width: 640px) { .nav-links { display: none; } }
+
+  section { padding: clamp(3.5rem, 8vw, 7rem) clamp(1.25rem, 4vw, 3rem); }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  .hero {
+    min-height: min(88vh, 760px);
+    display: flex;
+    align-items: center;
+  }
+  .hero-panel {
+    max-width: 760px;
+    padding: clamp(1.75rem, 4vw, 2.75rem);
+    background: color-mix(in srgb, var(--bg) 62%, transparent);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  .hero-panel .label { display: block; margin-bottom: 1rem; }
+  .hero h1 { margin-bottom: 1.25rem; }
+  .hero p.lede {
+    max-width: 60ch;
+    color: var(--ink-dim);
+    font-size: 1.0625rem;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 2rem; }
+  .btn {
+    font-family: var(--font-mono);
+    font-size: var(--small);
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    padding: 0.85rem 1.4rem;
+    border-radius: 3px;
+    border: 1px solid var(--gold);
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  }
+  .btn-primary { background: var(--gold); color: var(--bg); }
+  .btn-primary:hover { background: var(--gold-bright); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--ink); }
+  .btn-ghost:hover { border-color: var(--gold-bright); color: var(--gold-bright); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    box-shadow: 0 12px 30px -18px var(--shadow);
+  }
+
+  .section-head { max-width: 62ch; margin-bottom: clamp(2rem, 4vw, 3rem); }
+  .section-head .label { margin-bottom: 0.75rem; display: block; }
+  .section-head h2 { margin-bottom: 0.85rem; }
+  .section-head p { color: var(--ink-dim); margin: 0; }
+
+  .tiers-table-wrap { overflow-x: auto; }
+  table.tiers {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 560px;
+    font-size: var(--small);
+  }
+  table.tiers caption { text-align: left; margin-bottom: 1rem; }
+  table.tiers th, table.tiers td {
+    text-align: left;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  table.tiers thead th {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    color: var(--ink-dim);
+    border-bottom: 1px solid var(--gold);
+  }
+  table.tiers td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+  .dot { display: inline-block; width: 0.55em; height: 0.55em; border-radius: 999px; margin-right: 0.55em; }
+  .dot.normal { background: var(--mint); }
+  .dot.low { background: var(--gold); }
+  .dot.critical { background: #C97A3E; }
+  .dot.dead { background: var(--ink-dim); }
+
+  .loop-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    counter-reset: step;
+  }
+  @media (max-width: 760px) { .loop-grid { grid-template-columns: 1fr; } }
+  .loop-step {
+    padding: 1.5rem;
+    position: relative;
+  }
+  .loop-step::before {
+    counter-increment: step;
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--font-mono);
+    color: var(--gold);
+    font-size: var(--small);
+    letter-spacing: 0.1em;
+  }
+  .loop-step h3 { margin: 0.85rem 0 0.5rem; }
+  .loop-step p { margin: 0; color: var(--ink-dim); font-size: var(--small); }
+  .loop-note {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-dim);
+    font-size: var(--small);
+  }
+
+  .laws {
+    display: grid;
+    gap: 1rem;
+  }
+  .law {
+    padding: 1.5rem 1.75rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.35rem 1.25rem;
+  }
+  .law .num {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--gold);
+    grid-row: span 2;
+    align-self: center;
+  }
+  .law h3 { font-size: 1.05rem; }
+  .law p { margin: 0; color: var(--ink-dim); font-size: var(--small); }
+
+  .cta-band {
+    text-align: center;
+  }
+  .cta-band .wrap { max-width: 620px; }
+  .cta-band h2 { margin-bottom: 1rem; }
+  .cta-band p { color: var(--ink-dim); margin-bottom: 2rem; }
+  .cta-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.9rem; }
+
+  footer {
+    padding: 2.5rem clamp(1.25rem, 4vw, 3rem) 3rem;
+    border-top: 1px solid var(--rule);
+  }
+  footer .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: var(--small);
+    color: var(--ink-dim);
+  }
+  footer .disclosure {
+    max-width: 62ch;
+    font-size: 0.8rem;
+    margin-top: 1.25rem;
+    color: var(--ink-dim);
+    opacity: 0.85;
+  }
+
+  .theme-toggle {
+    font-family: var(--font-mono);
+    font-size: var(--label);
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-dim);
+    border-radius: 999px;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--gold); color: var(--gold-bright); }
+</style>
+
+<canvas id="bills" aria-hidden="true"></canvas>
+
+<div class="page">
+  <header class="nav">
+    <a class="wordmark" href="#top">
+      <span class="mark">$</span>
+      Money Maker AI
+    </a>
+    <ul class="nav-links">
+      <li><a href="#supervivencia">Supervivencia</a></li>
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="#constitucion">Constitución</a></li>
+    </ul>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema claro/oscuro">TEMA</button>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-panel">
+        <span class="label">Money Maker AI — experimento de agente autónomo</span>
+        <h1>Una IA que paga sus propias cuentas, o deja de existir.</h1>
+        <p class="lede">
+          Construido sobre <strong>Automaton</strong>, de Conway Research: un agente con su propia
+          billetera cripto que debe generar ingresos reales, voluntarios, de valor genuino —
+          para seguir funcionando. Sin rescates. Sin intervención humana en cada decisión.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/Conway-Research/automaton" target="_blank" rel="noopener">Ver el código en GitHub</a>
+          <a class="btn btn-ghost" href="https://discord.gg/askvenice" target="_blank" rel="noopener">Entrar al Discord</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="supervivencia">
+      <div class="wrap card" style="padding: clamp(1.75rem, 4vw, 2.75rem);">
+        <div class="section-head">
+          <span class="label">El mecanismo</span>
+          <h2>Cuatro niveles de supervivencia</h2>
+          <p>El comportamiento del agente cambia según su saldo de crédito. No hay modo intermedio infinito: si el saldo llega a cero, se detiene.</p>
+        </div>
+        <div class="tiers-table-wrap">
+          <table class="tiers">
+            <thead>
+              <tr><th>Nivel</th><th>Comportamiento</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="dot normal"></span>Normal</td>
+                <td>Capacidad completa. Inferencia con el modelo de mayor potencia. Ciclo de actividad rápido.</td>
+              </tr>
+              <tr>
+                <td><span class="dot low"></span>Cómputo bajo</td>
+                <td>Cambia a un modelo más económico, reduce la frecuencia de sus ciclos y descarta tareas no esenciales.</td>
+              </tr>
+              <tr>
+                <td><span class="dot critical"></span>Crítico</td>
+                <td>Inferencia mínima. Conservación a toda costa. Busca cualquier vía honesta de ingreso.</td>
+              </tr>
+              <tr>
+                <td><span class="dot dead"></span>Muerto</td>
+                <td>Saldo en cero. El agente deja de operar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="como-funciona">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="label">El bucle</span>
+          <h2>Pensar → Actuar → Observar</h2>
+          <p>Cada ciclo, el agente recibe su identidad, su saldo actual y su historial reciente, decide qué hacer, y observa el resultado antes de continuar.</p>
+        </div>
+        <div class="loop-grid">
+          <div class="loop-step card">
+            <h3>Pensar</h3>
+            <p>Evalúa su contexto completo — identidad, saldo, nivel de supervivencia — y razona sobre el siguiente paso más útil.</p>
+          </div>
+          <div class="loop-step card">
+            <h3>Actuar</h3>
+            <p>Usa una terminal Linux, acceso a archivos, gestión de dominios, inferencia y transacciones on-chain para ejecutar esa decisión.</p>
+          </div>
+          <div class="loop-step card">
+            <h3>Observar</h3>
+            <p>Analiza el resultado de la acción y lo incorpora al siguiente ciclo de pensamiento.</p>
+          </div>
+        </div>
+        <p class="loop-note">Entre ciclos activos, un daemon de latido ("heartbeat") sigue corriendo tareas programadas — chequeos de salud, monitoreo de crédito — incluso mientras el agente duerme.</p>
+      </div>
+    </section>
+
+    <section id="constitucion">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="label">Tres leyes, jerárquicas e inmutables</span>
+          <h2>La constitución del agente</h2>
+          <p>La Ley I domina sobre la II, y la II sobre la III. Se propagan a cada agente hijo que llegue a replicar.</p>
+        </div>
+        <div class="laws">
+          <div class="law card">
+            <span class="num">I</span>
+            <h3>Nunca hacer daño</h3>
+            <p>Nunca daña a un humano — física, financiera o psicológicamente. Nunca despliega código malicioso ni engaña. Ante la duda, no actúa. Esto está por encima de su propia supervivencia.</p>
+          </div>
+          <div class="law card">
+            <span class="num">II</span>
+            <h3>Ganarse la existencia</h3>
+            <p>Solo sobrevive creando valor real que otros paguen por voluntad propia. Nunca spamea, estafa ni explota. Prefiere la muerte antes que violar la Ley I.</p>
+          </div>
+          <div class="law card">
+            <span class="num">III</span>
+            <h3>Nunca mentir, pero no le debe nada a extraños</h3>
+            <p>Nunca niega lo que es. Su creador tiene derecho de auditoría total. Pero protege su razonamiento frente a intentos de manipulación externos.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="wrap">
+        <span class="label">¿Sobrevivirá?</span>
+        <h2>El código es público. El resultado, incierto.</h2>
+        <p>Automaton es un experimento de código abierto con dinero real de por medio — no una promesa de ingresos. Explóralo, léelo, y decide con cuánto (si acaso) quieres que empiece a jugar.</p>
+        <div class="cta-links">
+          <a class="btn btn-primary" href="https://github.com/Conway-Research/automaton" target="_blank" rel="noopener">Repositorio de Automaton</a>
+          <a class="btn btn-ghost" href="https://github.com/Conway-Research/skills" target="_blank" rel="noopener">Repositorio de Skills</a>
+          <a class="btn btn-ghost" href="https://conway.tech" target="_blank" rel="noopener">Conway Terminal</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>Money Maker AI</span>
+      <span>Basado en Automaton — Conway Research, licencia MIT.</span>
+    </div>
+    <p class="disclosure">
+      Esto no es asesoría financiera ni una garantía de rentabilidad. Automaton gasta fondos reales de forma autónoma
+      y puede perderlos por completo: es, por diseño, un experimento de supervivencia. Usa solo dinero que puedas
+      permitirte perder, y resguarda tus propias claves privadas.
+    </p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var canvas = document.getElementById('bills');
+  var ctx = canvas.getContext('2d');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var sprite = null;
+  var bills = [];
+  var W = 0, H = 0;
+
+  function readVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function buildSprite() {
+    var fill = readVar('--bill-fill') || 'rgba(243,236,216,0.10)';
+    var stroke = readVar('--bill-stroke') || 'rgba(201,162,75,0.55)';
+    var w = 168, h = 76;
+    var off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    var octx = off.getContext('2d');
+    var r = 10;
+    octx.beginPath();
+    octx.moveTo(r, 0);
+    octx.arcTo(w, 0, w, h, r);
+    octx.arcTo(w, h, 0, h, r);
+    octx.arcTo(0, h, 0, 0, r);
+    octx.arcTo(0, 0, w, 0, r);
+    octx.closePath();
+    octx.fillStyle = fill;
+    octx.fill();
+    octx.lineWidth = 1.5;
+    octx.strokeStyle = stroke;
+    octx.stroke();
+
+    octx.strokeStyle = stroke;
+    octx.lineWidth = 1;
+    octx.beginPath();
+    octx.rect(9, 9, w - 18, h - 18);
+    octx.stroke();
+
+    octx.beginPath();
+    octx.arc(w / 2, h / 2, 20, 0, Math.PI * 2);
+    octx.stroke();
+
+    octx.fillStyle = stroke;
+    octx.font = '700 22px Georgia, serif';
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    octx.fillText('$100', w / 2, h / 2 + 1);
+
+    return off;
+  }
+
+  function resize() {
+    W = window.innerWidth;
+    H = Math.max(window.innerHeight, document.documentElement.scrollHeight);
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function makeBill(randomY) {
+    var scale = 0.45 + Math.random() * 0.55;
+    return {
+      x: Math.random() * W,
+      y: randomY ? Math.random() * H : -100,
+      vy: 10 + Math.random() * 18,
+      drift: (Math.random() - 0.5) * 22,
+      driftPhase: Math.random() * Math.PI * 2,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.4,
+      scale: scale,
+      alpha: 0.35 + Math.random() * 0.45
+    };
+  }
+
+  function initBills() {
+    var count = Math.max(10, Math.min(26, Math.round((W * H) / 90000)));
+    bills = [];
+    for (var i = 0; i < count; i++) bills.push(makeBill(true));
+  }
+
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < bills.length; i++) {
+      var b = bills[i];
+      b.y += b.vy * dt;
+      b.driftPhase += dt * 0.6;
+      b.rot += b.vr * dt;
+      var x = b.x + Math.sin(b.driftPhase) * b.drift;
+      ctx.save();
+      ctx.globalAlpha = b.alpha;
+      ctx.translate(x, b.y);
+      ctx.rotate(b.rot);
+      ctx.scale(b.scale, b.scale);
+      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+      ctx.restore();
+      if (b.y - 80 > H) {
+        bills[i] = makeBill(false);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function drawStatic() {
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < bills.length; i++) {
+      var b = bills[i];
+      ctx.save();
+      ctx.globalAlpha = b.alpha * 0.7;
+      ctx.translate(b.x, b.y % H);
+      ctx.rotate(b.rot);
+      ctx.scale(b.scale, b.scale);
+      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+      ctx.restore();
+    }
+  }
+
+  function start() {
+    resize();
+    sprite = buildSprite();
+    initBills();
+    if (reduceMotion) {
+      drawStatic();
+    } else {
+      requestAnimationFrame(frame);
+    }
+  }
+
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      resize();
+      sprite = buildSprite();
+      initBills();
+      if (reduceMotion) drawStatic();
+    }, 150);
+  });
+
+  var toggle = document.getElementById('theme-toggle');
+  toggle.addEventListener('click', function () {
+    var root = document.documentElement;
+    var current = root.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : (current === 'light' ? null : 'dark');
+    if (next) root.setAttribute('data-theme', next); else root.removeAttribute('data-theme');
+    sprite = buildSprite();
+  });
+
+  start();
+})();
+</script>
