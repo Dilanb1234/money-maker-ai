@@ -1,5 +1,5 @@
 <title>Money Maker AI</title>
-<meta name="description" content="Money Maker AI — un experimento de agente autónomo (Conway Automaton) que debe generar sus propios ingresos reales o deja de existir.">
+<meta name="description" content="Money Maker AI — un experimento de agente autónomo que debe generar sus propios ingresos reales o deja de existir.">
 <style>
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
@@ -17,8 +17,6 @@
     --mint: #4FBE85;
     --rule: #2A5744;
     --shadow: rgba(0,0,0,0.45);
-    --bill-fill: rgba(243,236,216,0.10);
-    --bill-stroke: rgba(201,162,75,0.55);
 
     --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
     --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -45,8 +43,6 @@
       --mint: #1F7A4C;
       --rule: #D8CBA0;
       --shadow: rgba(20,40,25,0.14);
-      --bill-fill: rgba(22,40,31,0.06);
-      --bill-stroke: rgba(147,113,28,0.45);
     }
   }
   :root[data-theme="light"] {
@@ -61,8 +57,6 @@
     --mint: #1F7A4C;
     --rule: #D8CBA0;
     --shadow: rgba(20,40,25,0.14);
-    --bill-fill: rgba(22,40,31,0.06);
-    --bill-stroke: rgba(147,113,28,0.45);
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
@@ -76,8 +70,6 @@
     --mint: #4FBE85;
     --rule: #2A5744;
     --shadow: rgba(0,0,0,0.45);
-    --bill-fill: rgba(243,236,216,0.10);
-    --bill-stroke: rgba(201,162,75,0.55);
   }
 
   * { box-sizing: border-box; }
@@ -358,13 +350,12 @@
         <span class="label">Money Maker AI — experimento de agente autónomo</span>
         <h1>Una IA que paga sus propias cuentas, o deja de existir.</h1>
         <p class="lede">
-          Construido sobre <strong>Automaton</strong>, de Conway Research: un agente con su propia
-          billetera cripto que debe generar ingresos reales, voluntarios, de valor genuino —
-          para seguir funcionando. Sin rescates. Sin intervención humana en cada decisión.
+          Money Maker AI es un agente autónomo con su propia billetera: debe generar ingresos
+          reales, voluntarios, de valor genuino — para seguir funcionando. Sin rescates.
+          Sin intervención humana en cada decisión.
         </p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="https://github.com/Conway-Research/automaton" target="_blank" rel="noopener">Ver el código en GitHub</a>
-          <a class="btn btn-ghost" href="https://discord.gg/askvenice" target="_blank" rel="noopener">Entrar al Discord</a>
+          <a class="btn btn-primary" href="#supervivencia">Ver cómo funciona</a>
         </div>
       </div>
     </section>
@@ -459,13 +450,8 @@
     <section class="cta-band">
       <div class="wrap">
         <span class="label">¿Sobrevivirá?</span>
-        <h2>El código es público. El resultado, incierto.</h2>
-        <p>Automaton es un experimento de código abierto con dinero real de por medio — no una promesa de ingresos. Explóralo, léelo, y decide con cuánto (si acaso) quieres que empiece a jugar.</p>
-        <div class="cta-links">
-          <a class="btn btn-primary" href="https://github.com/Conway-Research/automaton" target="_blank" rel="noopener">Repositorio de Automaton</a>
-          <a class="btn btn-ghost" href="https://github.com/Conway-Research/skills" target="_blank" rel="noopener">Repositorio de Skills</a>
-          <a class="btn btn-ghost" href="https://conway.tech" target="_blank" rel="noopener">Conway Terminal</a>
-        </div>
+        <h2>Dinero real de por medio. El resultado, incierto.</h2>
+        <p>Money Maker AI es un experimento con dinero real — no una promesa de ingresos ni un producto terminado. Esta página es una vitrina de cómo funciona, no un canal para operarlo.</p>
       </div>
     </section>
   </main>
@@ -473,12 +459,12 @@
   <footer>
     <div class="wrap">
       <span>Money Maker AI</span>
-      <span>Basado en Automaton — Conway Research, licencia MIT.</span>
+      <span>Experimento de IA autónoma con dinero real.</span>
     </div>
     <p class="disclosure">
-      Esto no es asesoría financiera ni una garantía de rentabilidad. Automaton gasta fondos reales de forma autónoma
-      y puede perderlos por completo: es, por diseño, un experimento de supervivencia. Usa solo dinero que puedas
-      permitirte perder, y resguarda tus propias claves privadas.
+      Esto no es asesoría financiera ni una garantía de rentabilidad. Money Maker AI gasta fondos reales de forma
+      autónoma y puede perderlos por completo: es, por diseño, un experimento de supervivencia. Usa solo dinero que
+      puedas permitirte perder, y resguarda tus propias claves privadas.
     </p>
   </footer>
 </div>
@@ -493,18 +479,18 @@
   var bills = [];
   var W = 0, H = 0;
 
-  function readVar(name) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  }
-
   function buildSprite() {
-    var fill = readVar('--bill-fill') || 'rgba(243,236,216,0.10)';
-    var stroke = readVar('--bill-stroke') || 'rgba(201,162,75,0.55)';
-    var w = 168, h = 76;
+    var w = 220, h = 94;
     var off = document.createElement('canvas');
     off.width = w; off.height = h;
     var octx = off.getContext('2d');
-    var r = 10;
+
+    var paper = '#D7E4C2';
+    var paperShade = '#B9D19E';
+    var ink = '#22401C';
+    var seal = '#A9812E';
+    var r = 8;
+
     octx.beginPath();
     octx.moveTo(r, 0);
     octx.arcTo(w, 0, w, h, r);
@@ -512,28 +498,75 @@
     octx.arcTo(0, h, 0, 0, r);
     octx.arcTo(0, 0, w, 0, r);
     octx.closePath();
-    octx.fillStyle = fill;
+    var grad = octx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, paper);
+    grad.addColorStop(1, paperShade);
+    octx.fillStyle = grad;
     octx.fill();
-    octx.lineWidth = 1.5;
-    octx.strokeStyle = stroke;
+    octx.lineWidth = 2;
+    octx.strokeStyle = ink;
     octx.stroke();
 
-    octx.strokeStyle = stroke;
+    octx.save();
+    octx.clip();
+
+    octx.strokeStyle = ink;
+    octx.globalAlpha = 0.5;
     octx.lineWidth = 1;
-    octx.beginPath();
-    octx.rect(9, 9, w - 18, h - 18);
-    octx.stroke();
+    octx.strokeRect(7, 7, w - 14, h - 14);
+    octx.globalAlpha = 1;
 
-    octx.beginPath();
-    octx.arc(w / 2, h / 2, 20, 0, Math.PI * 2);
-    octx.stroke();
+    octx.fillStyle = ink;
+    octx.font = '700 18px Georgia, serif';
+    octx.textBaseline = 'top';
+    octx.textAlign = 'left';
+    octx.fillText('100', 14, 11);
+    octx.textAlign = 'right';
+    octx.textBaseline = 'bottom';
+    octx.fillText('100', w - 14, h - 11);
 
-    octx.fillStyle = stroke;
-    octx.font = '700 22px Georgia, serif';
+    var cx = w / 2 - 4, cy = h / 2 + 3;
+    octx.strokeStyle = ink;
+    octx.globalAlpha = 0.7;
+    octx.lineWidth = 1.5;
+    octx.beginPath();
+    octx.ellipse(cx, cy, 25, 31, 0, 0, Math.PI * 2);
+    octx.stroke();
+    octx.beginPath();
+    octx.arc(cx, cy - 9, 11, 0, Math.PI * 2);
+    octx.stroke();
+    octx.beginPath();
+    octx.moveTo(cx - 15, cy + 25);
+    octx.quadraticCurveTo(cx, cy + 5, cx + 15, cy + 25);
+    octx.stroke();
+    octx.globalAlpha = 1;
+
+    octx.fillStyle = seal;
+    octx.beginPath();
+    octx.arc(w - 42, h / 2, 17, 0, Math.PI * 2);
+    octx.fill();
+    octx.strokeStyle = ink;
+    octx.globalAlpha = 0.6;
+    octx.lineWidth = 1;
+    octx.stroke();
+    octx.globalAlpha = 1;
+    octx.fillStyle = paper;
+    octx.font = '700 17px Georgia, serif';
     octx.textAlign = 'center';
     octx.textBaseline = 'middle';
-    octx.fillText('$100', w / 2, h / 2 + 1);
+    octx.fillText('$', w - 42, h / 2 + 1);
 
+    octx.fillStyle = ink;
+    octx.font = '700 9px Georgia, serif';
+    octx.textAlign = 'center';
+    octx.textBaseline = 'alphabetic';
+    octx.save();
+    octx.translate(w / 2, h - 13);
+    octx.letterSpacing = '2px';
+    octx.fillText('ONE HUNDRED DOLLARS', 0, 0);
+    octx.restore();
+
+    octx.restore();
     return off;
   }
 
@@ -558,7 +591,7 @@
       rot: Math.random() * Math.PI * 2,
       vr: (Math.random() - 0.5) * 0.4,
       scale: scale,
-      alpha: 0.35 + Math.random() * 0.45
+      alpha: 0.22 + Math.random() * 0.33
     };
   }
 
@@ -623,7 +656,6 @@
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
       resize();
-      sprite = buildSprite();
       initBills();
       if (reduceMotion) drawStatic();
     }, 150);
@@ -635,7 +667,6 @@
     var current = root.getAttribute('data-theme');
     var next = current === 'dark' ? 'light' : (current === 'light' ? null : 'dark');
     if (next) root.setAttribute('data-theme', next); else root.removeAttribute('data-theme');
-    sprite = buildSprite();
   });
 
   start();
